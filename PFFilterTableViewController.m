@@ -69,8 +69,9 @@
 
         if (indexPath.row == 0) {
             cell = [tableView dequeueReusableCellWithIdentifier:@"AddNewCell" forIndexPath:indexPath];
-
-            cell.textLabel.text = [NSString stringWithFormat:@"Add %@", frameString];
+            UIListContentConfiguration *conf = cell.defaultContentConfiguration;
+            [conf setText: [NSString stringWithFormat:@"Add %@", frameString]];
+            [cell setContentConfiguration: conf];
 
             BOOL createFrameSpecific = !existingFilter || [existingFilter.frame isEqual:@"<any_frame>"];
 
@@ -84,7 +85,9 @@
         } else {
             cell = [tableView dequeueReusableCellWithIdentifier:@"AddAnyFrameCell" forIndexPath:indexPath];
 
-            cell.textLabel.text = @"Add Any Frame";
+            UIListContentConfiguration *conf = cell.defaultContentConfiguration;
+            [conf setText: @"Add Any Frame"];
+            [cell setContentConfiguration: conf];
 
             BOOL createAnyFrame = !existingFilter || ![self.manager hasAnyFrameForClass:[self.viewToExplore class]];
             

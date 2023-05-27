@@ -1,3 +1,5 @@
+#include <UIKit/UIKit.h>
+
 @interface PFApp: NSObject
 
 -(id)initWithBundleID:(NSString *)bundleID name:(NSString *)name enabled:(BOOL)enabled;

@@ -65,9 +65,9 @@
             appsDict[app.bundleIdentifier] = [app localizedName];
         }
 
-        // @"/var/mobile/Library/Preferences/PermaFlex/"
+        // @"/var/jb/var/mobile/Library/Preferences/PermaFlex/"
         NSError *error = nil;
-        NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:@"/var/mobile/Library/Preferences/PermaFlex/" error:&error];
+        NSArray *contents = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:@"/var/jb/var/mobile/Library/Preferences/PermaFlex/" error:&error];
 
         NSMutableArray *tempApps = [NSMutableArray array];
 
@@ -113,14 +113,14 @@
 }
 
 -(NSDictionary *)dictionaryForBundleID:(NSString *)bundleID {
-    NSString *fileName = [@"/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:bundleID];
+    NSString *fileName = [@"/var/jb/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:bundleID];
 
     NSData *jsonData = [NSData dataWithContentsOfFile:fileName];
 
 	NSDictionary *viewClassesDict = nil;
 
     if (jsonData) {
-        viewClassesDict = [NSJSONSerialization JSONObjectWithData:jsonData options:nil error:nil];
+        viewClassesDict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil];
     }
 
     return viewClassesDict;
@@ -165,7 +165,7 @@
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         PFApp *app = [self.apps objectAtIndex:indexPath.row];
 
-        [[NSFileManager defaultManager] removeItemAtPath:[@"/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:app.bundleID] error:nil];
+        [[NSFileManager defaultManager] removeItemAtPath:[@"/var/jb/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:app.bundleID] error:nil];
 
         [self.apps removeObjectAtIndex:indexPath.row];
 
@@ -183,7 +183,7 @@
 
 -(NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     if (section == 0) {
-        return @"Applications that have been modified with PermaFlex will appear here. The configuration files are stored at /var/mobile/Library/Preferences/PermaFlex/.\n\nAfter deleting/enabling/disabling a configuration the application must be restarted for the changes to take effect.";
+        return @"Applications that have been modified with PermaFlex will appear here. The configuration files are stored at /var/jb/var/mobile/Library/Preferences/PermaFlex/.\n\nAfter deleting/enabling/disabling a configuration the application must be restarted for the changes to take effect.";
     }
     
     return nil;
@@ -211,7 +211,7 @@
         if (dict) {
             [dict setObject:[NSNumber numberWithBool:on] forKey:@"enabled"];
 
-            NSString *fileName = [@"/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:app.bundleID];
+            NSString *fileName = [@"/var/jb/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:app.bundleID];
 
             NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
             NSString *jsonString = [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];

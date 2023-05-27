@@ -1,21 +1,22 @@
 #import "PFFilterTableViewController.h"
 #import "PFFilterManager.h"
 #import "Model/PFFilter.h"
+#import "SafeFunctions.h"
 
-@interface FLEXViewExplorerViewController: UIViewController
+@interface FLEXObjectExplorerViewController: UIViewController
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section;
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath;
 - (BOOL)shouldShowDescription;
 
-@property (nonatomic, readonly) UIView *viewToExplore;
+@property (nonatomic, readonly) id object;
 
 @end
 
-%hook FLEXViewExplorerViewController
+%hook FLEXObjectExplorerViewController
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (![self shouldShowDescription] || !self.viewToExplore) {
+    if (![self shouldShowDescription] || !self.object) {
         return %orig;
     }
 
@@ -26,7 +27,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (![self shouldShowDescription] || !self.viewToExplore) {
+    if (![self shouldShowDescription] || !self.object) {
         return %orig;
     }
 
@@ -52,7 +53,7 @@
 }
 
 - (BOOL)tableView:(UITableView *)tableView shouldShowMenuForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (![self shouldShowDescription] || !self.viewToExplore) {
+    if (![self shouldShowDescription] || !self.object) {
         return %orig;
     }
 
@@ -63,7 +64,7 @@
 }
 
 - (BOOL)tableView:(UITableView *)tableView shouldHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (![self shouldShowDescription] || !self.viewToExplore) {
+    if (![self shouldShowDescription] || !self.object) {
         return %orig;
     }
 
@@ -74,7 +75,7 @@
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (![self shouldShowDescription] || !self.viewToExplore) {
+    if (![self shouldShowDescription] || !self.object) {
         return %orig;
     }
 
@@ -85,12 +86,12 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (![self shouldShowDescription] || !self.viewToExplore) {
+    if (![self shouldShowDescription] || !self.object) {
         %orig;
     } else if (indexPath.section == 0 && indexPath.row == [self tableView:tableView numberOfRowsInSection:indexPath.section] - 1) {
         if ([[PFFilterManager sharedManager] enabled]) {
             PFFilterTableViewController *ctrl = [[[PFFilterTableViewController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
-            ctrl.viewToExplore = self.viewToExplore;
+            ctrl.viewToExplore = self.object;
             ctrl.manager = [PFFilterManager sharedManager];
 
             [self.navigationController pushViewController:ctrl animated:YES];
@@ -193,6 +194,8 @@
     if (self.alpha != 0.0 && [self pf_shouldHide]) {
         self.pf_hide = YES;
         self.alpha = 0.0;
+    } else {
+        self.pf_hide = NO;
     }
 }
 
@@ -240,24 +243,22 @@
 %end
 
 %ctor {
-    BOOL isSpringBoard = [[NSBundle mainBundle].bundleIdentifier isEqual:@"com.apple.springboard"];
-    
-    NSArray *args = [[NSProcessInfo processInfo] arguments];
-
+    BOOL isSpringBoard = [safe_getBundleIdentifier() isEqual:@"com.apple.springboard"];
     BOOL shouldInit = NO;
-    
-    if (args.count != 0) {
-        NSString *executablePath = args[0];
-        if (executablePath) {
-            BOOL isApplication = [executablePath rangeOfString:@"/Application"].location != NSNotFound;
-            shouldInit = isSpringBoard || isApplication;
-            if (shouldInit) {
-                %init;
-            }
+
+    NSString *executablePath = safe_getExecutablePath();
+    if (executablePath) {
+        BOOL isApplication = [executablePath hasPrefix:@"/var/containers/Bundle/Application"] ||
+                            [executablePath hasPrefix:@"/Applications"] ||
+                            [executablePath containsString:@"/procursus/Applications"] ||
+                            [executablePath hasSuffix:@"CoreServices/SpringBoard.app/SpringBoard"];
+        shouldInit = isSpringBoard || isApplication;
+        if (shouldInit) {
+            %init;
         }
     }
 
-    if (shouldInit) {
+    if (isSpringBoard) {
         [[PFFilterManager sharedManager] initForSpringBoard];
     }
 }

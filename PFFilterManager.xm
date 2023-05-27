@@ -1,4 +1,5 @@
 #import "PFFilterManager.h"
+#import "SafeFunctions.h"
 
 @interface PFFilterManager ()
 
@@ -29,7 +30,7 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
         
         NSString *content = [(NSString *)name substringFromIndex:prefixWithBundleID.length];
         
-        NSString *dir = @"/var/mobile/Library/Preferences/PermaFlex/";
+        NSString *dir = @"/var/jb/var/mobile/Library/Preferences/PermaFlex/";
 
         if (![[NSFileManager defaultManager] fileExistsAtPath:dir isDirectory:nil]) {
             [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:NO attributes:nil error:nil];
@@ -37,9 +38,9 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
 
         NSString *fileName = [dir stringByAppendingPathComponent:bundleID];
 
-        BOOL saved = [content writeToFile:fileName atomically:YES encoding:NSUTF8StringEncoding error:nil];
+        [content writeToFile:fileName atomically:YES encoding:NSUTF8StringEncoding error:nil];
 
-        NSLog(@"[PermaFlex] saving: %i", saved);
+        // NSLog(@"[PermaFlex] saving: %i", saved);
     }
 }
 
@@ -47,27 +48,26 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
     if (self = [super init]) {
         self.bundleID = bundleID;
 
-        NSString *fileName = [@"/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:self.bundleID];
+        NSString *fileName = [@"/var/jb/var/mobile/Library/Preferences/PermaFlex/" stringByAppendingPathComponent:self.bundleID];
 
         NSData *jsonData = [NSData dataWithContentsOfFile:fileName];
 
 		NSDictionary *viewClassesDict = nil;
 
         if (jsonData) {
-            viewClassesDict = [NSJSONSerialization JSONObjectWithData:jsonData options:nil error:nil];
+            viewClassesDict = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:nil];
         }
 
         self.filters = [NSMutableDictionary dictionary];
-
         self.enabled = [viewClassesDict objectForKey:@"enabled"] == nil || [[viewClassesDict objectForKey:@"enabled"] boolValue];
 
         if (viewClassesDict && self.enabled) {
             for (NSString *key in viewClassesDict) {
+
                 if (![viewClassesDict[key] isKindOfClass:[NSDictionary class]]) {
                     continue;
                 }
                 NSDictionary *filterDict = viewClassesDict[key];
-
                 NSMutableDictionary *theFilterDict = [NSMutableDictionary dictionary];
 
                 for (NSString *filterKey in filterDict) {
@@ -84,7 +84,7 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
                         int equals = [propsDict[@"equals"] intValue];
 
                         PFProperty *prop = [[[PFProperty alloc] initWithKey:key value:value valid:YES equals:equals] autorelease];
-
+                
                         [filter.properties addObject:prop];
                     }
 
@@ -94,31 +94,27 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
                 self.filters[key] = theFilterDict;
             }
         }
-        NSLog(@"[PermaFlex] %@ init filters: %@", self.bundleID, self.filters);
+        // NSLog(@"[PermaFlex] %@ init filters: %@", self.bundleID, self.filters);
     }
 
     return self;
 }
 
 -(void)initForSpringBoard {
-    BOOL isSpringBoard = [[NSBundle mainBundle].bundleIdentifier isEqual:@"com.apple.springboard"];
+    // NSLog(@"[PermaFlex] initForSpringBoard");
 
-    if (isSpringBoard) {
-        NSLog(@"[PermaFlex] initForSpringBoard");
-
-        CFNotificationCenterAddObserver(
-            CFNotificationCenterGetDistributedCenter(),
-            &sbObserver,
-            notificationCallback,
-            NULL,
-            NULL,
-            CFNotificationSuspensionBehaviorDeliverImmediately
-        );
-    }
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDistributedCenter(),
+        &sbObserver,
+        notificationCallback,
+        NULL,
+        CFSTR("permaflex"),
+        CFNotificationSuspensionBehaviorDeliverImmediately
+    );
 }
 
 -(void)save {
-    NSLog(@"[PermaFlex] save called!!!");
+    // NSLog(@"[PermaFlex] save called!!!");
     NSMutableDictionary *classesDict = [NSMutableDictionary dictionary];
 
     NSMutableArray *keysToRemove = [NSMutableArray array];
@@ -143,16 +139,17 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
 
     NSData *jsonData = [NSJSONSerialization dataWithJSONObject:classesDict options:0 error:nil];
     NSString *jsonString = [[[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding] autorelease];
+    NSString *notifyString = [NSString stringWithFormat:@"com.shiftcmdk.permaflex.%@ %@", self.bundleID, jsonString];
 
     CFNotificationCenterPostNotification(
         CFNotificationCenterGetDistributedCenter(), 
-        (CFStringRef)[NSString stringWithFormat:@"com.shiftcmdk.permaflex.%@ %@", self.bundleID, jsonString], 
+        (__bridge CFStringRef) notifyString, 
+        CFSTR("permaflex"), 
         NULL, 
-        NULL, 
-        YES
+        true
     );
 
-    NSLog(@"[PermaFlex] save filters: %@", classesDict);
+    // NSLog(@"[PermaFlex] save filters: %@", classesDict);
 }
 
 -(void)saveFilter:(PFFilter *)filter {
@@ -261,7 +258,7 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
     static PFFilterManager *sharedManager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sharedManager = [[PFFilterManager alloc] initWithBundleID:[NSBundle mainBundle].bundleIdentifier];
+        sharedManager = [[PFFilterManager alloc] initWithBundleID: safe_getBundleIdentifier()];
     });
     return sharedManager;
 }
@@ -271,14 +268,14 @@ static void notificationCallback(CFNotificationCenterRef center, void *observer,
 
     self.bundleID = nil;
 
-    BOOL isSpringBoard = [[NSBundle mainBundle].bundleIdentifier isEqual:@"com.apple.springboard"];
+    BOOL isSpringBoard = [safe_getBundleIdentifier() isEqual:@"com.apple.springboard"];
 
     if (isSpringBoard) {
         CFNotificationCenterRemoveObserver(
             CFNotificationCenterGetDistributedCenter(),
             &sbObserver,
             NULL,
-            NULL
+            CFSTR("permaflex")
         );
     }
 

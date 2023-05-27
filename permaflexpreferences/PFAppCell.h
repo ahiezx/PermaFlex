@@ -1,3 +1,5 @@
+#include <UIKit/UIKit.h>
+
 @protocol PFAppCellDelegate <NSObject>
 
 -(void)switchValueDidChange:(BOOL)on cell:(UITableViewCell *)cell;

@@ -1,3 +1,5 @@
+#include <UIKit/UIKit.h>
+
 @interface PFProperty: NSObject
 
 -(id)initWithKey:(NSString *)key value:(NSString *)value valid:(BOOL)valid equals:(BOOL)equals;

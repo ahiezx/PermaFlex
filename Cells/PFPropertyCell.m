@@ -43,7 +43,7 @@
 
         self.currentValueLabel = [[[UILabel alloc] init] autorelease];
         self.currentValueLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        self.currentValueLabel.textColor = [[self.valueTextField valueForKey:@"_placeholderLabel"] textColor];
+        self.currentValueLabel.textColor = [self.valueTextField textColor];
         self.currentValueLabel.text = @"Current value:";
         self.currentValueLabel.font = [UIFont systemFontOfSize:12.0];
         self.currentValueLabel.numberOfLines = 0;

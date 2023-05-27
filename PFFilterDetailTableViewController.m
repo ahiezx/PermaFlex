@@ -82,24 +82,21 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (indexPath.row == self.properties.count) {
         UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"AddNewCell" forIndexPath:indexPath];
-
-        cell.textLabel.text = @"Add new property/ivar";
+        UIListContentConfiguration *conf = cell.defaultContentConfiguration;
+        [conf setText: @"Add new property/ivar"];
+        [cell setContentConfiguration: conf];
         cell.textLabel.textColor = self.view.tintColor;
-
         return cell;
     } else {
         PFPropertyCell *cell = (PFPropertyCell *)[tableView dequeueReusableCellWithIdentifier:@"PropertyCell" forIndexPath:indexPath];
-
         cell.delegate = self;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
-
         cell.propertyTextField.userInteractionEnabled = self.viewToExplore != nil;
 
         PFProperty *prop = [self.properties objectAtIndex:indexPath.row];
         NSString *currentValue = [self.currentValues objectAtIndex:indexPath.row];
 
         [cell configureWithProperty:prop currentValue:currentValue];
-
         return cell;
     }
 }
@@ -145,17 +142,14 @@
         prop.key = theCell.propertyTextField.text;
         prop.value = theCell.valueTextField.text;
         prop.equals = theCell.segmentedControl.selectedSegmentIndex == 0;
-
         NSString *currentValue;
 
         if (self.viewToExplore) {
             @try {
-            currentValue = [NSString stringWithFormat:@"%@", [self.viewToExplore valueForKeyPath:theCell.propertyTextField.text]];
-
+                currentValue = [NSString stringWithFormat:@"%@", [self.viewToExplore valueForKeyPath:theCell.propertyTextField.text]];
                 prop.valid = YES;
             } @catch (NSException *exception) {
                 currentValue = @"";
-
                 prop.valid = NO;
             }
         } else {
