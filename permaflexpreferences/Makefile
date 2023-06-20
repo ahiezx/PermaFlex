@@ -1,5 +1,5 @@
 ARCHS = arm64 arm64e
-TARGET = iphone:clang:16.4:15.1
+TARGET = iphone:clang:16.4:15.0
 
 BUNDLE_NAME = PermaFlexPreferences
 PermaFlexPreferences_FILES = ../SafeFunctions.xm PFRootListController.xm PFApp.m PFAppCell.m ../PFFilterManager.xm ../Model/PFFilter.m ../Model/PFProperty.m PFClassesListController.m ../PFFilterTableViewController.m ../PFFilterDetailTableViewController.m ../Cells/PFPropertyCell.m

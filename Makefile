@@ -1,6 +1,6 @@
 ARCHS = arm64 arm64e
 THEOS_PACKAGE_SCHEME = rootless
-TARGET = iphone:clang:16.4:15.1
+TARGET = iphone:clang:16.4:15.0
 SUBPROJECTS += permaflexpreferences
 
 include $(THEOS)/makefiles/common.mk
