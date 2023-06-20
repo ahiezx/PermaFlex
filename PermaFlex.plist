@@ -1,9 +1,7 @@
-{ 
-    Filter = { 
-        Bundles = ( 
-            "com.apple.springboard", 
-            "com.apple.AdSupport",
-            "com.apple.AppStore"
-        ); 
-    }; 
+{
+	Filter = {
+		Bundles = (
+			"com.apple.UIKit",
+		);
+	};
 }
