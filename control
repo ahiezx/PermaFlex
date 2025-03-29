@@ -3,8 +3,8 @@ Name: PermaFlex
 Depends: mobilesubstrate, firmware (>= 15.0)
 Version: 1.0.4
 Architecture: iphoneos-arm64
-Description: Permanently hide elements with FLEXible.
-Maintainer: bgli100
+Description: Permanently hide elements and edit text (semi-presistent) with FLEXible.
+Maintainer: ahiezx
 Author: shiftcmdk
 Section: Tweaks
 Depiction: https://shiftcmdk.github.io/repo/depictions/?p=com.shiftcmdk.permaflex

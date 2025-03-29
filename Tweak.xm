@@ -3,6 +3,15 @@
 #import "Model/PFFilter.h"
 #import "SafeFunctions.h"
 
+@interface UIView (PFTextEditing)
+@property (nonatomic, assign) BOOL pf_hide;
+@property (nonatomic, copy) NSString *pf_editedText;
+-(id)_viewControllerForAncestor;
+-(BOOL)pf_shouldHide;
+-(void)pf_hideIfNecessary;
+-(void)pf_saveEditedText:(NSString *)text;
+@end
+
 @interface FLEXObjectExplorerViewController: UIViewController
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section;
@@ -88,7 +97,38 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     if (![self shouldShowDescription] || !self.object) {
         %orig;
-    } else if (indexPath.section == 0 && indexPath.row == [self tableView:tableView numberOfRowsInSection:indexPath.section] - 1) {
+        return;
+    }
+
+    if ([self.object isKindOfClass:[UILabel class]] || 
+        [self.object isKindOfClass:[UITextView class]] || 
+        [self.object isKindOfClass:[UITextField class]]) {
+        
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Edit Text"
+                                                                     message:@"Enter new text"
+                                                              preferredStyle:UIAlertControllerStyleAlert];
+        
+        [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+            textField.text = [(id)self.object text];
+        }];
+        
+        UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                                                       handler:^(UIAlertAction *action) {
+            NSString *newText = alert.textFields.firstObject.text;
+            [(UIView *)self.object pf_saveEditedText:newText];
+        }];
+        
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil];
+        
+        [alert addAction:okAction];
+        [alert addAction:cancelAction];
+        
+        [self presentViewController:alert animated:YES completion:nil];
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        return;
+    }
+
+    if (indexPath.section == 0 && indexPath.row == [self tableView:tableView numberOfRowsInSection:indexPath.section] - 1) {
         if ([[PFFilterManager sharedManager] enabled]) {
             PFFilterTableViewController *ctrl = [[[PFFilterTableViewController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
             ctrl.viewToExplore = self.object;
@@ -105,16 +145,6 @@
 
 %end
 
-@interface UIView ()
-
-@property (nonatomic, assign) BOOL pf_hide;
--(id)_viewControllerForAncestor;
-
--(BOOL)pf_shouldHide;
--(void)pf_hideIfNecessary;
-
-@end
-
 @interface UIViewController ()
 
 @property (getter=_window,nonatomic,readonly) UIWindow *window;
@@ -124,6 +154,7 @@
 %hook UIView
 
 %property (nonatomic, assign) BOOL pf_hide;
+%property (nonatomic, copy) NSString *pf_editedText;
 
 %new
 -(BOOL)pf_shouldHide {
@@ -199,6 +230,20 @@
     }
 }
 
+%new
+-(void)pf_saveEditedText:(NSString *)text {
+    if ([self isKindOfClass:[UILabel class]] || [self isKindOfClass:[UITextView class]] || [self isKindOfClass:[UITextField class]]) {
+        self.pf_editedText = text;
+        if ([self isKindOfClass:[UILabel class]]) {
+            [(UILabel *)self setText:text];
+        } else if ([self isKindOfClass:[UITextView class]]) {
+            [(UITextView *)self setText:text];
+        } else if ([self isKindOfClass:[UITextField class]]) {
+            [(UITextField *)self setText:text];
+        }
+    }
+}
+
 -(void)setBounds:(CGRect)arg1 {
     %orig;
 
@@ -221,6 +266,9 @@
     %orig;
 
     [self pf_hideIfNecessary];
+    if (self.pf_editedText) {
+        [self pf_saveEditedText:self.pf_editedText];
+    }
 }
 
 -(void)setAlpha:(double)arg1 {
